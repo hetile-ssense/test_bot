@@ -1,6 +1,6 @@
 # hubot-salty
 
-This is a coffee.script for hubot and slack. It's puprose is to be a slack's interface to salt API.
+This is a coffee.script for [hubot](https://hubot.github.com/) and [slack](https://slack.com/). It's puprose is to be a slack's interface to [salt API](https://docs.saltstack.com/en/latest/ref/cli/salt-api.html).
 
 ### Installation
 
@@ -50,14 +50,20 @@ In the boot.sh file, you will find some configuration variable that are required
 
 ### Notes
 
-The REST cherrypy must be activated in /etc/salt/master.  Exemple:
+The REST cherrypy must be activated in /etc/salt/master.  
+
+Exemple:
+
 ```
 rest_cherrypy:
   port: 8000
   disable_ssl: true
 ```
 
-Access to different module are controled directly in /etc/salt/master file. Exemple: 
+Access to different module are controled directly in /etc/salt/master file.
+
+Exemple: 
+
 
 ```
 external_auth:
