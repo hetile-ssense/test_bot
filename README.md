@@ -1,6 +1,6 @@
 # hubot-salty
 
-This bot is a coffee.script for hubot and slack. It's puprose is to be a slack's interface to salt API.
+This is a coffee.script for hubot and slack. It's puprose is to be a slack's interface to salt API.
 
 ### Installation
 
@@ -38,7 +38,7 @@ yo hubot --name=salty --owner=aa@aa.com --description='Une belle desc' --adapter
 
 ### Config
 
-In the boot.sh file, you will find some configuration variable that are requiried in order to connect to slack and connect to SALT-API.
+In the boot.sh file, you will find some configuration variable that are required in order to connect to slack and connect to SALT-API.
 
 | Variable | description |
 | ------ | ------ |
