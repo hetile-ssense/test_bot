@@ -76,3 +76,5 @@ external_auth:
      - system.*
      - '@runner'
 ```
+
+NOTE: You MUST set the module available to the runner client in script/salty.coffee until the [feature request](https://github.com/saltstack/salt/issues/19732) is added to salt.
