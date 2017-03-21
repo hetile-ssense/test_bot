@@ -9,6 +9,7 @@
 #
 # Commands:
 #   hubot salt <target> <function> [arguments]
+#   hubot salt-run <function> [arguments]
 #
 # Notes:
 #   Salt REST API needs to be up and running
@@ -20,6 +21,12 @@ salt_token = process.env.SALT_X_TOKEN
 saltlog_channel = process.env.SALT_OUTPUT_CHANNEL
 salt_listen = process.env.SALT_LISTEN
 
+# define what salt-run command are allowed
+salt =
+  run:
+    'fileserver.update': true
+
+# check is all environment variable are correctly set
 missingEnvironment = (msg) ->
   missingData = false
   unless salt_api_url?
@@ -36,8 +43,17 @@ missingEnvironment = (msg) ->
     missingData |= true
   missingData
 
+# check if message comes from the right room
+goodRoom = (robot, msg) ->
+  isGoodRoom = false
+  if robot.adapter.client.rtm.dataStore.getChannelGroupOrDMById(msg.message.room).name == salt_listen
+    isGoodRoom |= true
+  isGoodRoom
+
+
 module.exports = (robot) ->
 
+  # This is the API helper method
   saltApi = (data, callback) ->
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
     robot.http(salt_api_url)
@@ -54,10 +70,10 @@ module.exports = (robot) ->
             textBody = JSON.stringify(jsonBody, null, 2)
             callback(textBody, res)
 
+  # Main method. listen for direct salt command
   robot.hear /^salt\s+([\w-\.\*\']+)\s([\w-.]+)\s*(.*)$/i, (msg) ->
     unless (missingEnvironment msg)
-      roomname = robot.adapter.client.rtm.dataStore.getChannelGroupOrDMById msg.message.room
-      if roomname.name == salt_listen
+      if goodRoom(robot, msg)
         salt_function = msg.match[2].trim()
         salt_target = msg.match[1].trim()
         salt_args = msg.match[3].trim()
@@ -79,31 +95,38 @@ module.exports = (robot) ->
       else
         msg.reply "Nice try.. Command are only allowed from " + salt_listen
 
+  # Runner method, listen for direct salt-run command
   robot.hear /^salt-run\s+(.+)\s*(.*)$/i, (msg) ->
     unless (missingEnvironment msg)
-      roomname = robot.adapter.client.rtm.dataStore.getChannelGroupOrDMById msg.message.room
-      if roomname.name == salt_listen
+      if goodRoom(robot, msg)
         salt_function = msg.match[1].trim()
         salt_args = msg.match[2].trim()
 
-        msg.send "Executing [#{msg.message.text}]. Result sent to  ##{saltlog_channel}" 
+        # If the salt-run function is allowed
+        if salt.run[salt_function]?
+        
+          msg.send "Executing [#{msg.message.text}]. Result sent to  ##{saltlog_channel}" 
 
-        tmpdata =
-          client: 'runner'
-          fun: salt_function
+          tmpdata =
+            client: 'runner'
+            fun: salt_function
 
-        if salt_args
-          tmpdata['arg'] = salt_args
+          if salt_args
+            tmpdata['arg'] = salt_args
 
-        saltApi JSON.stringify(tmpdata), (result) ->
-          robot.messageRoom '#' + saltlog_channel, '[' + msg.message.text + '] triggered by ' + msg.message.user.real_name + '\n' + result
+          saltApi JSON.stringify(tmpdata), (result) ->
+            robot.messageRoom '#' + saltlog_channel, '[' + msg.message.text + '] triggered by ' + msg.message.user.real_name + '\n' + result
+
+        else
+          msg.reply "Sorry.. This command is not allowed"
 
       else
         msg.reply "Nice try.. Command are only allowed from " + salt_listen
-        
 
   robot.hear /^help/, (msg) ->
-    roomname = robot.adapter.client.rtm.dataStore.getChannelGroupOrDMById msg.message.room
-    if roomname.name == salt_listen
+    if goodRoom(robot, msg)
       msg.send "salt-run <function> [arguments] (Note: require '@runner' permission)"
       msg.send "salt <target> <function> [arguments]"
+
+
+
