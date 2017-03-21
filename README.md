@@ -48,4 +48,25 @@ In the boot.sh file, you will find some configuration variable that are required
 |SALT_LISTEN|Channel where command are issued by users|
 |HUBOT_SLACK_CHANNELS|List of channel to join when connecting|
 
+### Notes
 
+The REST cherrypy must be activated in /etc/salt/master.  Exemple:
+```
+rest_cherrypy:
+  port: 8000
+  disable_ssl: true
+```
+
+Access to different module are controled directly in /etc/salt/master file. Exemple: 
+
+```
+external_auth:
+  pam:
+   salt-api-user:
+     - test.*
+     - state.apply
+     - grains.*
+     - status.*
+     - system.*
+     - '@runner'
+```
