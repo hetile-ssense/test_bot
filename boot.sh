@@ -8,7 +8,7 @@ export HUBOT_SLACK_TOKEN=xoxb-152882513120-WmQsCFJDGUI5P40XaaG7oy8r
 
 # SALT api config
 export SALT_API_URL=http://localhost:8000
-export SALT_X_TOKEN=$(curl -sS localhost:8000/login -H 'Accept: application/x-yaml' -d username='testuser' -d password='agadou11' -d eauth='pam' |grep -oP 'token: (\w+)' |awk '{print $2}')
+export SALT_X_TOKEN=$(curl -sS $SALT_API_URL""/login -H 'Accept: application/x-yaml' -d username='testuser' -d password='agadou11' -d eauth='pam' |grep -oP 'token: (\w+)' |awk '{print $2}')
 
 # bot config
 export SALT_OUTPUT_CHANNEL=saltstack_log
