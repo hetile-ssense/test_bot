@@ -44,7 +44,10 @@ module.exports = (robot) ->
       .headers('Content-Type': 'application/json', 'X-Auth-Token': salt_token)
       .post(data) (err, res, body) ->
         if res.statusCode == 401
-          callback("Unauthorized Request, This might be a permission issue or the Token is expired.")
+          console.log "API Return\n------[body]------\n"
+          console.log Object( body )
+          console.log "\n------------\n"
+          callback("Unauthorized Request, This might be a permission issue or the Token is expired.\n#{body}")
         else
           try
             jsonBody = JSON.parse(body)
@@ -60,8 +63,7 @@ module.exports = (robot) ->
         salt_args = msg.match[3].trim()
 
         salt_target = salt_target.replace /\'/g, ''
-        orgcmd = msg.message.text.replace /@salty /, ''
-        msg.send "Executing [#{orgcmd}]. Result sent to  ##{saltlog_channel}"
+        msg.send "Executing [#{msg.message.text}]. Result sent to  ##{saltlog_channel}"
 
         tmpdata =
           client: 'local',
@@ -72,10 +74,36 @@ module.exports = (robot) ->
           tmpdata['arg'] = salt_args
 
         saltApi JSON.stringify(tmpdata), (result) ->
-          robot.messageRoom '#' + saltlog_channel, '[' + orgcmd + '] triggered by ' + msg.message.user.real_name + '\n' + result
+          robot.messageRoom '#' + saltlog_channel, '[' + msg.message.text + '] triggered by ' + msg.message.user.real_name + '\n' + result
 
       else
         msg.reply "Nice try.. Command are only allowed from " + salt_listen
 
-  robot.respond /help/, (msg) ->
-    msg.reply "salt <target> <function> [arguments]"
+  robot.hear /^salt-run\s+(.+)\s*(.*)$/i, (msg) ->
+    unless (missingEnvironment msg)
+      roomname = robot.adapter.client.rtm.dataStore.getChannelGroupOrDMById msg.message.room
+      if roomname.name == salt_listen
+        salt_function = msg.match[1].trim()
+        salt_args = msg.match[2].trim()
+
+        msg.send "Executing [#{msg.message.text}]. Result sent to  ##{saltlog_channel}" 
+
+        tmpdata =
+          client: 'runner'
+          fun: salt_function
+
+        if salt_args
+          tmpdata['arg'] = salt_args
+
+        saltApi JSON.stringify(tmpdata), (result) ->
+          robot.messageRoom '#' + saltlog_channel, '[' + msg.message.text + '] triggered by ' + msg.message.user.real_name + '\n' + result
+
+      else
+        msg.reply "Nice try.. Command are only allowed from " + salt_listen
+        
+
+  robot.hear /^help/, (msg) ->
+    roomname = robot.adapter.client.rtm.dataStore.getChannelGroupOrDMById msg.message.room
+    if roomname.name == salt_listen
+      msg.send "salt-run <function> [arguments] (Note: require '@runner' permission)"
+      msg.send "salt <target> <function> [arguments]"
